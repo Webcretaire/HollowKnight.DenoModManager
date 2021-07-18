@@ -1,0 +1,27 @@
+{
+  "name": "DenoModManager",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt",
+    "build": "nuxt build",
+    "start": "nuxt start",
+    "watch": "nuxt generate --watch",
+    "generate": "nuxt generate"
+  },
+  "dependencies": {
+    "@nuxtjs/axios": "^5.13.6",
+    "bootstrap": "^4.6.0",
+    "bootstrap-vue": "^2.21.2",
+    "core-js": "^3.15.1",
+    "fibers": "^5.0.0",
+    "nuxt": "^2.15.7",
+    "sass": "^1.35.2",
+    "sass-loader": "10",
+    "slugify": "^1.6.0"
+  },
+  "devDependencies": {
+    "@nuxt/types": "^2.15.7",
+    "@nuxt/typescript-build": "^2.1.0"
+  }
+}
