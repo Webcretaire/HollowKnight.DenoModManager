@@ -2,13 +2,25 @@
     <div>
         <b-row>
             <b-col cols="12" class="mb-4">
-                <h1>Hollow Knight mod manager</h1>
+                <p>
+                    <b-img
+                        src="~/assets/title.png"
+                        id="dmm-title"
+                        alt="Deno Mod Manager for Hollow Knight"
+                    />
+                </p>
                 <p>
                     <em>
                         <strong>Warning:</strong> this tool is used to manage
                         mods after you installed the modding API, it won't
                         install the modding API for you, for that check pinned
-                        messages in the Hollow Knight discord
+                        messages in the
+                        <a
+                            href="https://discord.com/invite/hollowknight"
+                            target="_blank"
+                        >
+                            Hollow Knight discord
+                        </a>
                     </em>
                 </p>
             </b-col>
@@ -31,7 +43,17 @@
                 </b-card>
             </b-col>
             <b-col cols="12">
-                <p><em>Website made by @Webcretaire</em></p>
+                <p>
+                    <em>
+                        Website made by
+                        <a
+                            href="https://github.com/Webcretaire"
+                            target="_blank"
+                        >
+                            @Webcretaire
+                        </a>
+                    </em>
+                </p>
             </b-col>
         </b-row>
         <loading-modal />
@@ -90,5 +112,10 @@ h1,
 p {
     color: white;
     text-align: center;
+}
+
+#dmm-title {
+    max-width: 80vw;
+    filter: drop-shadow(0 0 0.7rem black);
 }
 </style>

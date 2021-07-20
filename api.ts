@@ -3,7 +3,6 @@ import { parse } from "https://deno.land/x/xml/mod.ts";
 import { globalData } from "./store.ts";
 import { unZipFromURL } from "./unzipUtil.ts";
 import { existsSync, moveSync } from "https://deno.land/std/fs/mod.ts";
-import os from "https://deno.land/x/dos@v0.11.0/mod.ts";
 
 export interface Mod {
     dll: string;
