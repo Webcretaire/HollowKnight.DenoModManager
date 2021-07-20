@@ -31,7 +31,7 @@ export const unZipFromFile = async (
 ): Promise<string | false> => {
     // check if the zip file is exist
     if (!existsSync(filePath)) {
-        console.error("this file does not found");
+        console.error(`Zip file ${filePath} doesn't exist`);
         return false;
     }
     // check destinationPath is not null and set './' as destinationPath
