@@ -49,7 +49,7 @@ export default {
 
   // Axios module configuration: https://go.nuxtjs.dev/config-axios
   axios: {
-    baseURL: '/', // Used as fallback if no runtime config is provided
+    baseURL: process.env.NODE_ENV === 'production' ? '/' : 'http://localhost:9308', // Used as fallback if no runtime config is provided
   },
 
   // Build Configuration: https://go.nuxtjs.dev/config-build

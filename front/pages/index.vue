@@ -46,12 +46,10 @@ import LoadingModal from "@/components/LoadingModal.vue";
 
 export default {
     components: { ModInstallerModsTable, ModsTable, LoadingModal },
-    data() {
-        return {
-            mods: [],
-            available: [],
-        };
-    },
+    data: () => ({
+        mods: [],
+        available: [],
+    }),
     computed: {
         activeMods() {
             return this.mods.filter(({ active }) => active);
@@ -81,7 +79,7 @@ export default {
 <style lang="scss">
 html,
 body {
-    --background-color:rgb(37, 38, 43);
+    --background-color: rgb(37, 38, 43);
     background-color: var(--background-color);
     margin: 0;
     padding: 1rem;

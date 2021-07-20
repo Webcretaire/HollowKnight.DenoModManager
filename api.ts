@@ -1,8 +1,9 @@
 import { join } from "https://deno.land/std@0.101.0/path/mod.ts";
 import { parse } from "https://deno.land/x/xml/mod.ts";
 import { globalData } from "./store.ts";
-import { unZipFromURL } from "https://deno.land/x/zip@v1.1.0/mod.ts";
-import { existsSync } from "https://deno.land/std/fs/mod.ts";
+import { unZipFromURL } from "./unzipUtil.ts";
+import { existsSync, moveSync } from "https://deno.land/std/fs/mod.ts";
+import os from "https://deno.land/x/dos@v0.11.0/mod.ts";
 
 export interface Mod {
     dll: string;
@@ -67,24 +68,71 @@ export const getAvailableMods = () => ({
     mods: globalData?.modinstallerData?.ModLinks?.ModList?.ModLink.filter((m: any) => m.Name != "Modding API")
         .sort((a: any, b: any) => a.Name.localeCompare(b.Name, undefined, { numeric: false, sensitivity: "base" }))
         .map((m: any) => ({
-            installed: Array.isArray(m.Files.File) // XML is dumb, so 2 cases here...
-                ? m.Files.File.reduce((i: boolean, file: any) => i && existsSync(`./${file.Name}`), true)
-                : existsSync(`./${m.Files.File.Name}`),
+            installed: isModInstalled(m.Name),
             ...m,
         })),
 });
 
-export const installMod = async (mod: string): Promise<boolean> => {
-    if (!globalData?.modinstallerData?.ModLinks?.ModList?.ModLink) return Promise.resolve(false);
-
-    const url = globalData?.modinstallerData?.ModLinks?.ModList?.ModLink.find(
+const getModInstallerFiles = (mod: string): Array<any> | undefined => {
+    const files = globalData?.modinstallerData?.ModLinks?.ModList?.ModLink.find(
         ({ Name }: { Name: string }) => Name == mod
-    )?.Link;
+    )?.Files?.File;
 
-    if (!url) return Promise.resolve(false);
+    if (!files) return undefined;
+
+    return Array.isArray(files) ? files : [files];
+};
+
+const isModInstalled = (mod: string): boolean => {
+    const files = getModInstallerFiles(mod);
+
+    if (!files) return false; // Is an empty mod installed or not ? Let's say no, but actually no one cares
+
+    return files.reduce(
+        (i: boolean, file: any) => i && (existsSync(`./${file.Name}`) || existsSync(`./Disabled/${file.Name}`)),
+        true
+    );
+};
+
+const downloadAndUnzip = async (modData: any) => {
+    const tempDir = join(".", `__archive__content__`);
+
+    if (existsSync(tempDir)) Deno.removeSync(tempDir, {recursive: true});
+    Deno.mkdirSync(tempDir);
 
     try {
-        await unZipFromURL(url, "../../..");
+        await unZipFromURL(modData.Link, tempDir);
+
+        // The heuristic to detect where files are is bad, but it's so stupid that all archives don't have
+        // the same format that I don't even want to bother more than that
+        getModInstallerFiles(modData.Name)?.map((file: any) => {
+            if (existsSync(join(tempDir, file.Name))) moveSync(join(tempDir, file.Name), join(".", file.Name));
+            else moveSync(join(tempDir, "hollow_knight_Data", "Managed", "Mods", file.Name), join(".", file.Name));
+        });
+    } catch (e) {}
+
+    Deno.removeSync(tempDir, { recursive: true });
+};
+
+const doInstallMod = async (mod: string): Promise<boolean> => {
+    if (!globalData?.modinstallerData?.ModLinks?.ModList?.ModLink) return Promise.resolve(false);
+
+    const modData = globalData?.modinstallerData?.ModLinks?.ModList?.ModLink.find(
+        ({ Name }: { Name: string }) => Name == mod
+    );
+
+    if (!modData?.Link) return Promise.resolve(false);
+
+    if (modData.Dependencies)
+        for (const s of Array.isArray(modData.Dependencies.string)
+            ? modData.Dependencies.string
+            : [modData.Dependencies.string])
+            await installMod(s);
+
+    console.log(`Installing ${mod}`);
+
+    try {
+        await downloadAndUnzip(modData);
         return Promise.resolve(true);
     } catch (e) {
         console.error(e);
@@ -92,19 +140,20 @@ export const installMod = async (mod: string): Promise<boolean> => {
     }
 };
 
-const removeDll = (dll: string): Promise<void> =>  Deno.remove(`./${dll}`).catch(() => Deno.remove(`./Disabled/${dll}`));
+export const installMod = async (mod: string): Promise<boolean> =>
+    isModInstalled(mod) || mod === "Modding API" ? Promise.resolve(false) : doInstallMod(mod);
+
+const removeDll = (dll: string): Promise<void> => Deno.remove(`./${dll}`).catch(() => Deno.remove(`./Disabled/${dll}`));
 
 export const uninstallMod = async (mod: string): Promise<boolean> => {
     if (!globalData?.modinstallerData?.ModLinks?.ModList?.ModLink) return Promise.resolve(false);
 
-    const files = globalData?.modinstallerData?.ModLinks?.ModList?.ModLink.find(
-        ({ Name }: { Name: string }) => Name == mod
-    )?.Files?.File;
+    const files = getModInstallerFiles(mod);
 
     if (!files) return Promise.resolve(false);
 
     try {
-        Promise.all(Array.isArray(files) ? files.map((f: any) => removeDll(f.Name)) : [removeDll(files.Name)]);
+        Promise.all(files.map((f: any) => removeDll(f.Name)));
         return Promise.resolve(true);
     } catch (e) {
         console.error(e);
