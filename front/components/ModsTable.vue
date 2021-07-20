@@ -2,7 +2,11 @@
     <div>
         <b-table striped hover :items="items" :fields="fields">
             <template #cell(modInstallerData)="row">
-                <a v-if="row.value && row.value.Name" class="text-info" :href="getId(row.value.Name)">
+                <a
+                    v-if="row.value && row.value.Name"
+                    class="text-info"
+                    :href="getId(row.value.Name)"
+                >
                     {{ row.value.Name || "Unknown" }}
                 </a>
                 <span v-else class="text-warning">Unknown</span>
@@ -36,8 +40,9 @@
 </template>
 
 <script>
-import slugify from 'slugify';
+import slugify from "slugify";
 import { startLoading } from "@/util/loading";
+import { axiosErrorCallback } from "@/util/error";
 
 export default {
     name: "ModsTable",
@@ -56,27 +61,27 @@ export default {
         };
     },
     methods: {
-        enableMod(mod) {
+        apiCall(url) {
             startLoading(this);
-            this.$axios.$get(`/mod/${mod.dll}/enable`).finally(() => {
-                this.$emit("reload");
-            });
+            this.$axios
+                .$get(url)
+                .catch(axiosErrorCallback)
+                .finally(() => {
+                    this.$emit("reload");
+                });
+        },
+        enableMod(mod) {
+            this.apiCall(`/mod/${mod.dll}/enable`);
         },
         disableMod(mod) {
-            startLoading(this);
-            this.$axios.$get(`/mod/${mod.dll}/disable`).finally(() => {
-                this.$emit("reload");
-            });
+            this.apiCall(`/mod/${mod.dll}/disable`);
         },
         uninstallMod(mod) {
-            startLoading(this);
-            this.$axios.$get(`/mod/${mod.Name}/uninstall`).finally(() => {
-                this.$emit("reload");
-            });
+            this.apiCall(`/mod/${mod.dll}/uninstall`);
         },
         getId(str) {
             return `#mi_row_${slugify(str)}`;
-        }
+        },
     },
 };
 </script>

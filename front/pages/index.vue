@@ -65,6 +65,7 @@ import ModsTable from "@/components/ModsTable.vue";
 import ModInstallerModsTable from "@/components/ModInstallerModsTable.vue";
 import { startLoading, endLoading } from "@/util/loading";
 import LoadingModal from "@/components/LoadingModal.vue";
+import { axiosErrorCallback } from "@/util/error";
 
 export default {
     components: { ModInstallerModsTable, ModsTable, LoadingModal },
@@ -88,11 +89,11 @@ export default {
             .then((data) => {
                 this.mods = data.mods;
             })
-            .then(() =>
-                this.$axios.$get("/mods/available").then((data) => {
-                    this.available = data.mods;
-                })
-            )
+            .then(() => this.$axios.$get("/mods/available"))
+            .then((data) => {
+                this.available = data.mods;
+            })
+            .catch(axiosErrorCallback)
             .finally(() => endLoading(this));
     },
 };

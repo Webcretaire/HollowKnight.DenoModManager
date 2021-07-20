@@ -25,29 +25,43 @@ export async function openUrl(url: string): Promise<void> {
     await process.status();
 }
 
+const errorHandlingWrapper = (f: Function, context: any) => {
+    try {
+        f();
+    } catch (e) {
+        context.response.status = 500;
+    }
+};
+
 export const run = async (port: number, openBrowser: boolean = true) => {
     const router = new Router();
     router
         .get("/mods/installed", context => {
-            context.response.body = getMods();
+            errorHandlingWrapper(() => (context.response.body = getMods()), context);
         })
         .get("/mods/available", context => {
-            context.response.body = getAvailableMods();
+            errorHandlingWrapper(() => (context.response.body = getAvailableMods()), context);
         })
         .get("/mod/:mod/enable", context => {
-            if (context?.params.mod) {
-                context.response.status = enableMod(context.params.mod) ? 200 : 500;
-            } else {
-                context.response.status = 400;
-            }
+            errorHandlingWrapper(() => {
+                if (context?.params.mod) {
+                    context.response.status = enableMod(context.params.mod) ? 200 : 500;
+                } else {
+                    context.response.status = 400;
+                }
+            }, context);
         })
         .get("/mod/:mod/disable", context => {
-            if (context?.params.mod) {
-                context.response.status = disableMod(context.params.mod) ? 200 : 500;
-            } else {
-                context.response.status = 400;
-            }
+            errorHandlingWrapper(() => {
+                if (context?.params.mod) {
+                    context.response.status = disableMod(context.params.mod) ? 200 : 500;
+                } else {
+                    context.response.status = 400;
+                }
+            }, context);
         })
+        // Oak can't handle this function using errorHandlingWrapper it seems, but that doesn't matter 
+        // because there are already try / catches in installMod and uninstallMod, so we're fairly safe
         .get("/mod/:mod/install", async context => {
             if (context?.params.mod) {
                 context.response.status = (await installMod(context.params.mod)) ? 200 : 500;
